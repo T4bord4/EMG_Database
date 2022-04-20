@@ -2,18 +2,24 @@
 # Last modified by Yi Jui Lee (August 15 2015)
 
 from __future__ import division
+
 import time
+from os.path import exists
+import pandas as pd
 import myo
 from myo.lowlevel import stream_emg
 from myo.six import print_
-from os.path import exists
 
 open('Emg', 'w').close()
 
 last_t = 0
 delta_t = []
+timestamp_list = []
+data_list = []
 
 flag = True
+
+df_myo = pd.DataFrame()
 
 temp = []
 with open('PythonVars.txt') as f:
@@ -26,10 +32,10 @@ print("\n\nSample rate is adjusted to " + str(samplerate) + " Hz")
 print("Collecting emg data every " + str(t_s) + " seconds")
 
 file_number = 0
-r = "EMG_READINGS\Emg_" + str(file_number) + ".txt"
+r = "EMG_READINGS\Emg_" + str(file_number) + ".csv"
 while (exists(r)):
     file_number = file_number + 1
-    r = "EMG_READINGS\Emg_" + str(file_number) + ".txt"
+    r = "EMG_READINGS\Emg_" + str(file_number) + ".csv"
 
 T = temp[1]
 print("\n\nThis program will terminate in " + str(T) + " seconds\n")
@@ -87,9 +93,9 @@ class Listener(myo.DeviceListener):
         if 't1' not in globals():
             global t1
             t1 = timestamp
-        if tdiff > t_s:
-            start = time.time()
-            show_output('emg', emg, r, tdiff)
+
+        start = time.time()
+        show_output('emg', emg, r)
 
     def on_unlock(self, myo, timestamp):
         print_('unlocked')
@@ -104,27 +110,35 @@ class Listener(myo.DeviceListener):
         print_('unsynced')
 
 
-def show_output(message, data, r, tdiff):
+def show_output(message, data, r):
     global t2
     global t1
     global T
     global delta_t
-    global last_t
+    global df_myo
     global flag
 
+    global timestamp_list
+    global data_list
+
     if t2 - t1 < (T * 1000000):
-        delta_t.append(tdiff)
-        with open(r, "a") as text_file:
-            text_file.write("{0}\n".format(data))
-            print('t:{:<9}: '.format(
-                (t2 - t1) / 1000000) + '[{:>8},  {:>8},  {:>8}, {:>8},  {:>8},  {:>8},  {:>8},  {:>8}]'
-                  .format(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
-        last_t = t2
+        df_myo = df_myo.append(pd.Series({'timestamp':t2,
+                                        'EMG_s0' : data[0],
+                                        'EMG_s1' : data[1],
+                                        'EMG_s2' : data[2],
+                                        'EMG_s3' : data[3],
+                                        'EMG_s4' : data[4],
+                                        'EMG_s5' : data[5],
+                                        'EMG_s6' : data[6],
+                                        'EMG_s7' : data[7]},
+                                         ),ignore_index = True)
+        # print('t:{:<9}: '.format(
+        #     (t2 - t1) / 1000000) + '[{:>8},  {:>8},  {:>8}, {:>8},  {:>8},  {:>8},  {:>8},  {:>8}]'
+        #       .format(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
     else:
         if flag:
-            print(delta_t)
-            print(len(delta_t))
-            print((len(delta_t) - 1) / sum(delta_t[1:]))
+            df_myo.to_csv(r)
+            print(r + " saved")
             flag = False
         # quit()
 
