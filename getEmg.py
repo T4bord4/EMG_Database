@@ -40,9 +40,6 @@ while (exists(r)):
 T = temp[1]
 print("\n\nThis program will terminate in " + str(T) + " seconds\n")
 
-
-
-
 myo.init()
 r"""
 There can be a lot of output from certain data like acceleration and orientation.
@@ -74,10 +71,8 @@ class Listener(myo.DeviceListener):
 
     def on_pair(self, myo, timestamp):
         print_('Paired')
-        print_(
-            "If you don't see any responses to your movements, try re-running the program or making sure the Myo works with Myo Connect (from Thalmic Labs).")
-        print_("Double tap enables EMG.")
-        print_("Spreading fingers disables EMG.\n")
+        print_("If you don't see any responses to your movements, try re-running the program or making sure the Myo works with Myo Connect (from Thalmic Labs).")
+
 
     def on_disconnect(self, myo, timestamp):
         print_('on_disconnect')
@@ -122,31 +117,39 @@ def show_output(message, data, r):
     global data_list
 
     if t2 - t1 < (T * 1000000):
-        df_myo = df_myo.append(pd.Series({'timestamp':t2,
-                                        'EMG_s0' : data[0],
-                                        'EMG_s1' : data[1],
-                                        'EMG_s2' : data[2],
-                                        'EMG_s3' : data[3],
-                                        'EMG_s4' : data[4],
-                                        'EMG_s5' : data[5],
-                                        'EMG_s6' : data[6],
-                                        'EMG_s7' : data[7]},
-                                         ),ignore_index = True)
+        df_myo = df_myo.append(pd.Series({'timestamp': t2,
+                                          'EMG_s0': data[0],
+                                          'EMG_s1': data[1],
+                                          'EMG_s2': data[2],
+                                          'EMG_s3': data[3],
+                                          'EMG_s4': data[4],
+                                          'EMG_s5': data[5],
+                                          'EMG_s6': data[6],
+                                          'EMG_s7': data[7]},
+                                         ), ignore_index=True)
         # print('t:{:<9}: '.format(
         #     (t2 - t1) / 1000000) + '[{:>8},  {:>8},  {:>8}, {:>8},  {:>8},  {:>8},  {:>8},  {:>8}]'
         #       .format(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
     else:
         if flag:
-            df_myo.to_csv(r)
+            print("End of data acquisition")
+            print("Saving " + r + " ...")
+            df_myo.to_csv(r, index=False)
             print(r + " saved")
             flag = False
         # quit()
 
 
 def main():
+
     hub = myo.Hub()
     hub.set_locking_policy(myo.locking_policy.none)
+
+    input("Press Enter to continue...\n")
+
     hub.run(1000, Listener())
+
+    print("Running...\n")
 
     # Listen to keyboard interrupts and stop the
     # hub in that case.
